@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/naitus-template.css" />
+    <link rel="stylesheet" href="css/naitus-guide.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://kit.fontawesome.com/66b2bdd969.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <title>Home</title>
+    <style>
+      body {
+        zoom: 100%;
+      }
+      
+      /* Language Selector Styles */
+      .language-container {
+        margin-top: 15px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      .language-select {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        color: white;
+        padding: 5px 10px;
+        font-size: 14px;
+        cursor: pointer;
+        text-align: center;
+        outline: none;
+        width: 150px;
+      }
+      
+      .language-select option {
+        background-color: #292d3e;
+        color: white;
+      }
+    </style>
+  </head>
+  <body id="static">
+    <main class="main-bg">
+      <div class="row justify-content-center">
+        <div class="logo">
+          <img src="assets/logo-oficial.svg" alt="" />
+        </div>
+
+        <!-- LOGIN -->
+        <div class="login-container d-flex flex-column align-items-center">
+          <h3>Iniciar sesión</h3>
+          <input class="login-btn my-2" style="width: 250px;" type="text" id="username" placeholder="usuario" />
+          <input class="login-btn my-2" style="width: 250px;" type="password" id="password" placeholder="contraseña" />
+          <button class="login-btn my-2 inverse" style="width: 250px;" onclick="login()">Log in</button>
+          <p id="login-error" style="color: red; display: none;">Usuario o contraseña incorrectos.</p>
+          <button class="login-btn my-2" style="width: 250px;" data-bs-toggle="modal" data-bs-target="#registerModal">Registrarse</button>
+        </div>
+
+        <!-- Redes -->
+        <div class="social-container">
+          <div class="wrapper">
+            <a href="#" class="social-box"><img src="assets/icons8-facebook.svg" alt="" /></a>
+            <a href="#" class="social-box"><img src="assets/icons8-instagram.svg" alt="" /></a>
+            <a href="#" class="social-box"><img src="assets/icons8-twitterx.svg" alt="" /></a>
+            <a href="#" class="social-box"><img src="assets/icons8-youtube-play.svg" alt="" /></a>
+          </div>
+        </div>
+        
+        <!-- Language Selector -->
+        <div class="language-container">
+          <select id="language-select" class="language-select" onchange="changeLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="pt">Português</option>
+          </select>
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL REGISTRO -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-4 text-center">
+          <h4>Registro de usuario</h4>
+          <input class="login-btn my-2 mx-auto" style="width: 250px;" type="text" id="new-username" placeholder="nuevo usuario" />
+          <input class="login-btn my-2 mx-auto" style="width: 250px;" type="password" id="new-password" placeholder="nueva contraseña" />
+          <button class="login-btn my-2 inverse mx-auto" style="width: 250px;" onclick="register()">Registrarse</button>
+          <p id="register-msg" style="color: green; display: none;">Registro exitoso.</p>
+          <p id="register-error" style="color: red; display: none;">El usuario ya existe.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/language.js"></script>
+    <script>
+      function getUsers() {
+        return JSON.parse(localStorage.getItem("cyllium_users") || "{}");
+      }
+
+      function saveUsers(users) {
+        localStorage.setItem("cyllium_users", JSON.stringify(users));
+      }
+
+       
+      function login() {
+  const username = document.getElementById("username").value.trim().toLowerCase();
+  const password = document.getElementById("password").value.trim();
+  const users = getUsers();
+
+  // Usuario admin fijo
+  if (username === "admin" && password === "2700") {
+    localStorage.setItem("cyllium_user", "invitado"); // para mostrarlo como "invitado"
+    window.location.href = "welcome.html";
+    return;
+  }
+
+  if (users[username] && users[username] === password) {
+    localStorage.setItem("cyllium_user", username);
+    window.location.href = "welcome.html";
+  } else {
+    document.getElementById("login-error").style.display = "block";
+  }
+}
+
+function register() {
+  const newUsernameRaw = document.getElementById("new-username").value.trim();
+  const newUsername = newUsernameRaw.toLowerCase(); // clave en minúscula
+  const newPassword = document.getElementById("new-password").value.trim();
+  const users = getUsers();
+
+  if (users[newUsername]) {
+    document.getElementById("register-error").style.display = "block";
+    document.getElementById("register-msg").style.display = "none";
+  } else {
+    users[newUsername] = newPassword;
+    saveUsers(users);
+    document.getElementById("register-error").style.display = "none";
+    document.getElementById("register-msg").style.display = "block";
+
+    setTimeout(() => {
+      const modal = bootstrap.Modal.getInstance(document.getElementById("registerModal"));
+      modal.hide();
+    }, 1200);
+  }
+}
+    </script>
+  </body>
+</html>

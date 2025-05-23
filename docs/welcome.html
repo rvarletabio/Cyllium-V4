@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/naitus-template.css" />
+    <link rel="stylesheet" href="css/naitus-guide.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://kit.fontawesome.com/66b2bdd969.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <title>Welcome</title>
+    <style>
+      body {
+        zoom: 100%;
+      }
+      
+      /* Language Selector Styles */
+      .language-container {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 100;
+      }
+      
+      .language-select {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        color: white;
+        padding: 5px 10px;
+        font-size: 14px;
+        cursor: pointer;
+        text-align: center;
+        outline: none;
+        width: 110px;
+      }
+      
+      .language-select option {
+        background-color: #292d3e;
+        color: white;
+      }
+    </style>
+  </head>
+  <body id="static">
+    <div id="page-loader-overlay" class="page-loader-overlay">
+        <div class="loader-spinner"></div>
+    </div>
+    
+    <!-- Language Selector -->
+    <div class="language-container">
+      <select id="language-select" class="language-select" onchange="changeLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="pt">Português</option>
+      </select>
+    </div>
+    
+    <main class="main-bg">
+      <div class="row justify-content-center align-items-center w-100">
+        <div class="mobile-frame">
+          <div class="content justify-content-center p-4">
+            <h1 class="title">
+              ¡Hola <br />
+              <span id="user-name">invitado</span>!
+            </h1>
+
+            <p>¡Te damos la bienvenida a Cyllium, una plataforma revolucionaria desarrollada por  <span class="special-word">Bioelements</span> para transformar el futuro del biopackaging! Cyllium es un proyecto visionario que combina inteligencia artificial y análisis avanzado de datos para innovar en el diseño de productos sostenibles, optimizar su ciclo de vida y predecir su biodegradabilidad con precisión científica. Más que una herramienta, es un motor de cambio para una industria más <span class="special-word"> verde, eficiente e inteligente.</span> </p>
+
+            <div class="float-icon mix">
+              <a href="menu.html">
+                <img src="assets/icons8-derecha-circulo-64.png" alt="" />
+              </a>
+            </div>
+          </div>
+          <video playsinline autoplay muted loop id="finalVideo">
+            <source src="assets/video.mp4" type="video/mp4" />
+          </video>
+          <div class="mask"></div>
+        </div>
+      </div>
+    </main>
+
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/language.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+  let name = localStorage.getItem("cyllium_user");
+  if (!name || name === "admin") {
+    name = "invitado";
+  }
+  document.getElementById("user-name").textContent = name;
+});
+    </script>
+    <script src="js/loader.js"></script>
+  </body>
+</html>

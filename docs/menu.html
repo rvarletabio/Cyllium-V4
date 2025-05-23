@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Principal - Cyllium</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/naitus-template.css">
+    <link rel="stylesheet" href="css/naitus-guide.css">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        body#static {
+            background-image: url(assets/video.mp4); /* Assuming you want the same video background effect */
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            position: relative; /* Needed for the mask */
+        }
+
+        body { /* Added zoom here */
+            zoom: 70%;
+        }
+
+        body#static::before { /* This creates the mask effect from welcome.html */
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Adjust opacity as needed */
+            z-index: 1;
+        }
+
+        .menu-container {
+            position: relative; /* To ensure content is above the mask */
+            z-index: 2;
+            background-color: rgba(23, 26, 39, 0.85); /* Similar to products.html form background, with some transparency */
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .logo-container img {
+            max-width: 250px; /* Adjust as needed */
+            margin-bottom: 30px;
+        }
+
+        .menu-button {
+            background-color: #292d3e; /* Button background from products.html */
+            color: #ffffff;
+            border: 1px solid #3fcf8e; /* Green border from products.html */
+            border-radius: 12px; /* Rounded corners from products.html */
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .menu-button img {
+            margin-right: 10px;
+            height: 45px;
+            width: 45px;
+        }
+
+        .menu-button:hover:not([disabled]) {
+            background-color: #3fcf8e; /* Green background on hover */
+            color: #292d3e; /* Dark text on hover */
+            border-color: #59f3b7;
+        }
+
+        .menu-button[disabled] {
+            background-color: #4a4e5a;
+            border-color: #6c757d;
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+
+        .menu-title {
+            color: #ffffff;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+        
+        /* Language Selector Styles */
+        .language-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        
+        .language-select {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            outline: none;
+            width: 110px;
+        }
+        
+        .language-select option {
+            background-color: #292d3e;
+            color: white;
+        }
+    </style>
+</head>
+<body id="static">
+    <div id="page-loader-overlay" class="page-loader-overlay">
+        <div class="loader-spinner"></div>
+    </div>
+    
+    <!-- Language Selector -->
+    <div class="language-container">
+      <select id="language-select" class="language-select" onchange="changeLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="pt">Português</option>
+      </select>
+    </div>
+    
+    <main class="main-bg">
+        <video playsinline autoplay muted loop id="backgroundVideo" style="position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; width: auto; height: auto; z-index: -100; background-size: cover;">
+            <source src="assets/video.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="mask" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: -99;"></div>
+
+        <div class="menu-container">
+            <div class="logo-container">
+                <img src="logo_footer.png" alt="Bioelements Logo">
+            </div>
+            <h2 class="menu-title">Aplicaciones Cyllium</h2>
+            <a href="#" class="menu-button" disabled>
+                <img src="ico_caracteristicas_01.png" alt="">Diseño de formulaciones (En desarrollo)
+            </a>
+            <a href="calculator.html" class="menu-button">
+                <img src="ico_caracteristicas_02.png" alt="">Impacto Medioambiental (Prototipo)
+            </a>
+            <a href="products.html" class="menu-button">
+                <img src="ico_caracteristicas_03.png" alt="">Biodegradabilidad de nuestros productos
+            </a>
+        </div>
+    </main>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/language.js"></script>
+    <script src="js/loader.js"></script>
+</body>
+</html> 

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de Impacto Ambiental</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/naitus-template.css">
+    <link rel="stylesheet" href="css/naitus-guide.css">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        body#static {
+            background-image: url(assets/video.mp4);
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+
+        body {
+            zoom: 70%;
+        }
+
+        body#static::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        .content-container {
+            position: relative;
+            z-index: 2;
+            background-color: rgba(23, 26, 39, 0.85);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .result-card {
+            background: rgba(41, 45, 62, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            color: white;
+            border: 1px solid #3fcf8e;
+        }
+
+        .impact-section {
+            background: rgba(63, 207, 142, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #3fcf8e;
+        }
+
+        .lifecycle-stage {
+            border-left: 2px solid #3fcf8e;
+            padding-left: 15px;
+            margin: 10px 0;
+        }
+
+        .metric-value {
+            font-size: 1.2em;
+            color: #3fcf8e;
+        }
+
+        .download-btn {
+            background: #3fcf8e;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 30px;
+            color: #292d3e;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 20px 0;
+        }
+
+        /* Language Selector Styles */
+        .language-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        
+        .language-select {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            outline: none;
+            width: 110px;
+        }
+        
+        .language-select option {
+            background-color: #292d3e;
+            color: white;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body id="static">
+    <!-- Language Selector -->
+    <div class="language-container">
+        <select id="language-select" class="language-select" onchange="changeLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+
+    <main class="main-bg">
+        <video playsinline autoplay muted loop id="backgroundVideo" style="position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; width: auto; height: auto; z-index: -100; background-size: cover;">
+            <source src="assets/video.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="mask" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: -99;"></div>
+
+        <div class="content-container">
+            <h2 class="text-white text-center mb-4" id="results-title">Resultados del Análisis</h2>
+
+            <div class="result-card">
+                <h4 id="total-impact-title">Impacto Total</h4>
+                <div class="impact-section">
+                    <div id="total-co2" class="metric-value">CO₂: Calculando...</div>
+                    <div id="total-energy" class="metric-value">Energía: Calculando...</div>
+                    <div id="total-water" class="metric-value">Agua: Calculando...</div>
+                    <div id="total-waste" class="metric-value">Residuos: Calculando...</div>
+                </div>
+            </div>
+
+            <div class="result-card">
+                <h4 id="lifecycle-analysis">Análisis por Etapa del Ciclo de Vida</h4>
+                <div class="lifecycle-stage">
+                    <h5 id="production">Producción</h5>
+                    <div id="production-impact" class="impact-section">Calculando...</div>
+                </div>
+                <div class="lifecycle-stage">
+                    <h5 id="transport">Transporte</h5>
+                    <div id="transport-impact" class="impact-section">Calculando...</div>
+                </div>
+                <div class="lifecycle-stage">
+                    <h5 id="usage">Uso</h5>
+                    <div id="usage-impact" class="impact-section">Calculando...</div>
+                </div>
+                <div class="lifecycle-stage">
+                    <h5 id="end-of-life">Fin de Vida</h5>
+                    <div id="end-of-life-impact" class="impact-section">Calculando...</div>
+                </div>
+            </div>
+
+            <div class="result-card">
+                <h4 id="impact-distribution">Distribución de Impacto</h4>
+                <div class="chart-container">
+                    <canvas id="impactChart"></canvas>
+                </div>
+            </div>
+
+            <button class="download-btn w-100" onclick="generatePDF()" id="download-btn">
+                Descargar Reporte PDF
+            </button>
+
+            <div class="mt-3 text-center">
+                <a href="calculator.html" class="text-white" id="back-to-calculator">← Volver a la Calculadora</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/language.js"></script>
+    <script>
+        // Lifecycle stage impact factors (percentage of total impact)
+        const lifecycleFactors = {
+            production: 0.6,    // 60% of total impact
+            transport: 0.15,    // 15% of total impact
+            usage: 0.1,         // 10% of total impact
+            endOfLife: 0.15     // 15% of total impact
+        };
+
+        function calculateLifecycleImpacts(totalCO2, totalEnergy, totalWater, totalWaste) {
+            return {
+                production: {
+                    co2: totalCO2 * lifecycleFactors.production,
+                    energy: totalEnergy * lifecycleFactors.production,
+                    water: totalWater * lifecycleFactors.production,
+                    waste: totalWaste * lifecycleFactors.production
+                },
+                transport: {
+                    co2: totalCO2 * lifecycleFactors.transport,
+                    energy: totalEnergy * lifecycleFactors.transport,
+                    water: totalWater * lifecycleFactors.transport,
+                    waste: totalWaste * lifecycleFactors.transport
+                },
+                usage: {
+                    co2: totalCO2 * lifecycleFactors.usage,
+                    energy: totalEnergy * lifecycleFactors.usage,
+                    water: totalWater * lifecycleFactors.usage,
+                    waste: totalWaste * lifecycleFactors.usage
+                },
+                endOfLife: {
+                    co2: totalCO2 * lifecycleFactors.endOfLife,
+                    energy: totalEnergy * lifecycleFactors.endOfLife,
+                    water: totalWater * lifecycleFactors.endOfLife,
+                    waste: totalWaste * lifecycleFactors.endOfLife
+                }
+            };
+        }
+
+        function updateResults() {
+            const data = JSON.parse(localStorage.getItem('packagingComponents') || '{"components": [], "productionVolume": 1}');
+            const componentsData = data.components;
+            const productionVolume = data.productionVolume;
+            
+            const materialImpacts = {
+                // Bio-based
+                pla: { co2: 3.8, energy: 67, water: 235, waste: 0.05 },
+                pbat: { co2: 4.2, energy: 82, water: 310, waste: 0.06 },
+                pha: { co2: 2.8, energy: 50, water: 180, waste: 0.04 },
+                
+                // Conventional Plastics
+                pet: { co2: 6.5, energy: 85, water: 305, waste: 0.08 },
+                hdpe: { co2: 6.0, energy: 76, water: 280, waste: 0.07 },
+                ldpe: { co2: 6.2, energy: 78, water: 290, waste: 0.07 },
+                pp: { co2: 5.8, energy: 73, water: 275, waste: 0.06 },
+                
+                // Paper & Wood
+                cardboard: { co2: 1.5, energy: 25, water: 400, waste: 0.02 },
+                paper: { co2: 1.8, energy: 35, water: 450, waste: 0.03 },
+                wood: { co2: 0.8, energy: 15, water: 120, waste: 0.01 },
+                
+                // Metal & Glass
+                aluminum: { co2: 11.0, energy: 155, water: 1200, waste: 0.15 },
+                steel: { co2: 8.5, energy: 110, water: 850, waste: 0.12 },
+                glass: { co2: 4.5, energy: 65, water: 450, waste: 0.08 }
+            };
+
+            let totalCO2 = 0;
+            let totalEnergy = 0;
+            let totalWater = 0;
+            let totalWaste = 0;
+
+            componentsData.forEach(component => {
+                const impact = materialImpacts[component.material];
+                const weight = component.weight;
+
+                totalCO2 += impact.co2 * weight;
+                totalEnergy += impact.energy * weight;
+                totalWater += impact.water * weight;
+                totalWaste += impact.waste * weight;
+            });
+
+            // Multiply by production volume
+            totalCO2 *= productionVolume;
+            totalEnergy *= productionVolume;
+            totalWater *= productionVolume;
+            totalWaste *= productionVolume;
+
+            // Update total impact values with volume information
+            document.getElementById('total-co2').textContent = `CO₂: ${totalCO2.toFixed(2)} kg (${(totalCO2/productionVolume).toFixed(2)} kg/unidad)`;
+            document.getElementById('total-energy').textContent = `Energía: ${totalEnergy.toFixed(2)} kWh (${(totalEnergy/productionVolume).toFixed(2)} kWh/unidad)`;
+            document.getElementById('total-water').textContent = `Agua: ${totalWater.toFixed(2)} L (${(totalWater/productionVolume).toFixed(2)} L/unidad)`;
+            document.getElementById('total-waste').textContent = `Residuos: ${totalWaste.toFixed(2)} kg (${(totalWaste/productionVolume).toFixed(2)} kg/unidad)`;
+
+            // Add volume information to the results card
+            const totalImpactDiv = document.querySelector('.result-card');
+            const volumeInfo = document.createElement('div');
+            volumeInfo.className = 'impact-section mt-2';
+            volumeInfo.innerHTML = `<div class="metric-value">Volumen Total de Producción: ${productionVolume.toLocaleString()} unidades</div>`;
+            totalImpactDiv.insertBefore(volumeInfo, totalImpactDiv.children[1]);
+
+            // Calculate lifecycle impacts
+            const lifecycleImpacts = calculateLifecycleImpacts(totalCO2, totalEnergy, totalWater, totalWaste);
+
+            // Update lifecycle stage sections with per-unit values
+            document.getElementById('production-impact').innerHTML = `
+                CO₂: ${lifecycleImpacts.production.co2.toFixed(2)} kg (${(lifecycleImpacts.production.co2/productionVolume).toFixed(2)} kg/unidad)<br>
+                Energía: ${lifecycleImpacts.production.energy.toFixed(2)} kWh (${(lifecycleImpacts.production.energy/productionVolume).toFixed(2)} kWh/unidad)<br>
+                Agua: ${lifecycleImpacts.production.water.toFixed(2)} L (${(lifecycleImpacts.production.water/productionVolume).toFixed(2)} L/unidad)<br>
+                Residuos: ${lifecycleImpacts.production.waste.toFixed(2)} kg (${(lifecycleImpacts.production.waste/productionVolume).toFixed(2)} kg/unidad)
+            `;
+
+            document.getElementById('transport-impact').innerHTML = `
+                CO₂: ${lifecycleImpacts.transport.co2.toFixed(2)} kg (${(lifecycleImpacts.transport.co2/productionVolume).toFixed(2)} kg/unidad)<br>
+                Energía: ${lifecycleImpacts.transport.energy.toFixed(2)} kWh (${(lifecycleImpacts.transport.energy/productionVolume).toFixed(2)} kWh/unidad)<br>
+                Agua: ${lifecycleImpacts.transport.water.toFixed(2)} L (${(lifecycleImpacts.transport.water/productionVolume).toFixed(2)} L/unidad)<br>
+                Residuos: ${lifecycleImpacts.transport.waste.toFixed(2)} kg (${(lifecycleImpacts.transport.waste/productionVolume).toFixed(2)} kg/unidad)
+            `;
+
+            document.getElementById('usage-impact').innerHTML = `
+                CO₂: ${lifecycleImpacts.usage.co2.toFixed(2)} kg (${(lifecycleImpacts.usage.co2/productionVolume).toFixed(2)} kg/unidad)<br>
+                Energía: ${lifecycleImpacts.usage.energy.toFixed(2)} kWh (${(lifecycleImpacts.usage.energy/productionVolume).toFixed(2)} kWh/unidad)<br>
+                Agua: ${lifecycleImpacts.usage.water.toFixed(2)} L (${(lifecycleImpacts.usage.water/productionVolume).toFixed(2)} L/unidad)<br>
+                Residuos: ${lifecycleImpacts.usage.waste.toFixed(2)} kg (${(lifecycleImpacts.usage.waste/productionVolume).toFixed(2)} kg/unidad)
+            `;
+
+            document.getElementById('end-of-life-impact').innerHTML = `
+                CO₂: ${lifecycleImpacts.endOfLife.co2.toFixed(2)} kg (${(lifecycleImpacts.endOfLife.co2/productionVolume).toFixed(2)} kg/unidad)<br>
+                Energía: ${lifecycleImpacts.endOfLife.energy.toFixed(2)} kWh (${(lifecycleImpacts.endOfLife.energy/productionVolume).toFixed(2)} kWh/unidad)<br>
+                Agua: ${lifecycleImpacts.endOfLife.water.toFixed(2)} L (${(lifecycleImpacts.endOfLife.water/productionVolume).toFixed(2)} L/unidad)<br>
+                Residuos: ${lifecycleImpacts.endOfLife.waste.toFixed(2)} kg (${(lifecycleImpacts.endOfLife.waste/productionVolume).toFixed(2)} kg/unidad)
+            `;
+
+            // Create impact distribution chart
+            const ctx = document.getElementById('impactChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Producción', 'Transporte', 'Uso', 'Fin de Vida'],
+                    datasets: [{
+                        data: [
+                            lifecycleFactors.production * 100,
+                            lifecycleFactors.transport * 100,
+                            lifecycleFactors.usage * 100,
+                            lifecycleFactors.endOfLife * 100
+                        ],
+                        backgroundColor: [
+                            '#80D88F',
+                            '#60A8D8',
+                            '#D8A860',
+                            '#D86060'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generatePDF() {
+            // This is a placeholder for PDF generation functionality
+            alert('Función de generación de PDF en desarrollo');
+        }
+
+        // Initialize results when page loads
+        document.addEventListener('DOMContentLoaded', updateResults);
+    </script>
+</body>
+</html> 
