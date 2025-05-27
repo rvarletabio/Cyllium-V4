@@ -64,10 +64,29 @@ def predecir_curva(tipo, material, espesor, largo, ancho, ambiente):
             factor_escala = 20 / max_prediccion
             predicciones = predicciones * factor_escala
             print(f"INFO: Curva PE/TPS escalada por factor: {factor_escala} para no superar el 20%")
-        # Adicionalmente, asegurar que ningun valor sea negativo despues de escalar (aunque poco probable con random forest para %)
-        predicciones = np.maximum(predicciones, 0)
+    
+    # Ajuste específico para biodegradación aeróbica según el espesor
+    if ambiente == "Aeróbica":
+        espesor_limite = 160  # micras
+        if espesor > espesor_limite:
+            # Calculamos un factor de penalización basado en cuánto excede el límite
+            exceso = (espesor - espesor_limite) / espesor_limite
+            # Factor de penalización que aumenta gradualmente con el exceso
+            factor_penalizacion = 1 / (1 + 0.5 * exceso)
+            
+            # Aplicamos el factor de penalización de forma gradual a lo largo del tiempo
+            for i in range(len(predicciones)):
+                tiempo_normalizado = tiempos[i] / 600  # Normalizar tiempo a [0,1]
+                # La penalización aumenta con el tiempo
+                factor_tiempo = 1 - (tiempo_normalizado * (1 - factor_penalizacion))
+                predicciones[i] = predicciones[i] * factor_tiempo
+            
+            print(f"INFO: Curva aeróbica ajustada por espesor: {espesor}μm > {espesor_limite}μm")
+            print(f"Factor de penalización base: {factor_penalizacion:.3f}")
 
-    # Ensure predictions are always ascending (non-decreasing)
+    # Ensure predictions are always ascending (non-decreasing) and between 0-100
+    predicciones = np.maximum(predicciones, 0)
+    predicciones = np.minimum(predicciones, 100)
     for i in range(1, len(predicciones)):
         if predicciones[i] < predicciones[i-1]:
             predicciones[i] = predicciones[i-1]
