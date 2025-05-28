@@ -204,15 +204,15 @@
         // Create animated SVG chart with the data points
         createAnimatedChart(container, data.t, data.y, ambiente);
 
-        // Mostrar íconos de verificación o error según los criterios actualizados
+        // Mostrar íconos de verificación o error según el cumplimiento
         document.querySelectorAll(".category").forEach(cat => {
           const amb = cat.dataset.ambiente;
           const check = cat.querySelector(".status-icon.checked");
           const cross = cat.querySelector(".status-icon.error");
 
           if (amb === ambiente) {
-            // Usar data.cumple que ahora usa los criterios correctos del backend
-            if (data.cumple) {
+            // Usar data.cumple que viene como string "true" o "false"
+            if (data.cumple === "true") {
               check.style.display = "block";
               cross.style.display = "none";
             } else {
@@ -227,6 +227,8 @@
       })
       .catch(error => {
         console.error("🛑 Error al predecir:", error);
+        const container = document.querySelector(".img-container");
+        container.innerHTML = `<p style='color: white; text-align: center;'>Error: ${error.message}</p>`;
       });
     }
 
