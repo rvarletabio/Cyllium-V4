@@ -65,47 +65,40 @@ def predecir_curva(tipo, material, espesor, largo, ancho, ambiente):
             predicciones = predicciones * factor_escala
             print(f"INFO: Curva PE/TPS escalada por factor: {factor_escala} para no superar el 20%")
     
-    # Ajuste específico para biodegradación aeróbica de BioE8i y BioE10
-    if ambiente == "Aeróbica" and material in ["BioE8i", "BioE10"]:
+    # Ajuste específico para biodegradación aeróbica con BioE8i y BioE10
+    if ambiente == "Aeróbica" and material in ["Bio E-8i", "Bio E-10"]:
         espesor_limite = 160  # micras
-        tiempo_norma = 180    # días
-        porcentaje_norma = 90 # %
+        tiempo_norma = 180  # días
+        porcentaje_norma = 90  # %
         
         # Encontrar el índice correspondiente a 180 días
         idx_180 = np.searchsorted(tiempos, tiempo_norma)
         
         if espesor > espesor_limite:
-            # Para espesores > 160, debemos asegurar que NO cumpla la norma
-            # Calculamos un factor de ajuste basado en cuánto excede el límite
+            # Calculamos un factor de penalización basado en cuánto excede el límite
             exceso = (espesor - espesor_limite) / espesor_limite
+            # Factor de penalización que aumenta con el exceso
+            factor_penalizacion = 1 / (1 + exceso)
             
             # Ajustamos la curva para que no cumpla la norma a los 180 días
             valor_180_dias = predicciones[idx_180]
             if valor_180_dias >= porcentaje_norma:
-                # Ya no cumple la norma, solo ajustamos la forma de la curva
-                factor_tiempo = np.exp(-exceso * (tiempos / tiempo_norma))
-                predicciones = predicciones * factor_tiempo
-            else:
-                # Necesitamos hacer que no cumpla la norma
-                factor_escala = (porcentaje_norma - 5) / valor_180_dias
-                predicciones = predicciones * factor_escala
-                # Ajustamos la forma de la curva
-                factor_tiempo = np.exp(-exceso * (tiempos / tiempo_norma))
-                predicciones = predicciones * factor_tiempo
-            
-            print(f"INFO: Curva aeróbica ajustada para espesor {espesor}μm > {espesor_limite}μm")
-            print(f"Valor a 180 días: {predicciones[idx_180]:.1f}% (debe ser <{porcentaje_norma}%)")
-            
-        else:
-            # Para espesores ≤ 160, debemos asegurar que cumpla la norma
-            valor_180_dias = predicciones[idx_180]
-            if valor_180_dias < porcentaje_norma:
-                # Necesitamos hacer que cumpla la norma
-                factor_escala = (porcentaje_norma + 5) / valor_180_dias
-                predicciones = predicciones * factor_escala
+                # Calculamos cuánto necesitamos reducir para no cumplir la norma
+                factor_ajuste = (porcentaje_norma - 5) / valor_180_dias  # 5% menos que el mínimo requerido
                 
-            print(f"INFO: Curva aeróbica ajustada para espesor {espesor}μm ≤ {espesor_limite}μm")
-            print(f"Valor a 180 días: {predicciones[idx_180]:.1f}% (debe ser >{porcentaje_norma}%)")
+                # Aplicamos una penalización gradual que aumenta con el tiempo
+                for i in range(len(predicciones)):
+                    tiempo_normalizado = tiempos[i] / tiempo_norma
+                    if tiempo_normalizado <= 1:
+                        # Hasta 180 días, aplicamos penalización gradual
+                        factor_tiempo = 1 - (tiempo_normalizado * (1 - factor_ajuste))
+                    else:
+                        # Después de 180 días, mantenemos la penalización pero permitimos crecimiento más lento
+                        factor_tiempo = factor_ajuste * (1 + 0.1 * np.log(tiempo_normalizado))
+                    predicciones[i] = predicciones[i] * factor_tiempo * factor_penalizacion
+            
+            print(f"INFO: Curva aeróbica ajustada por espesor: {espesor}μm > {espesor_limite}μm")
+            print(f"Factor de penalización: {factor_penalizacion:.3f}")
 
     # Ensure predictions are always ascending (non-decreasing) and between 0-100
     predicciones = np.maximum(predicciones, 0)
@@ -221,16 +214,18 @@ def predict():
             t_list = t.tolist()
             y_list = y.tolist()
             
-            # Criterios de cumplimiento por norma ASTM
+            # Criterios de cumplimiento actualizados según las normas especificadas
             criterios_cumplimiento = {
-                "Aeróbica": {"dias": 300, "porcentaje": 80},
-                "Anaeróbica": {"dias": 365, "porcentaje": 70},
-                "Ambiental": {"dias": 600, "porcentaje": 80},
-                "Marina": {"dias": 90, "porcentaje": 20}
+                "Aeróbica": {"dias": 180, "porcentaje": 90},
+                "Anaeróbica": {"dias": 365, "porcentaje": 90},
+                "Ambiental": {"dias": 600, "porcentaje": 98}
             }
             
             # Evaluar cumplimiento según norma
-            criterio = criterios_cumplimiento.get(ambiente, {"dias": 180, "porcentaje": 90})
+            criterio = criterios_cumplimiento.get(ambiente)
+            if not criterio:
+                return jsonify({"error": "Ambiente de biodegradación no válido"}), 400
+                
             tiempo_critico = criterio["dias"]
             porcentaje_requerido = criterio["porcentaje"]
             
@@ -241,11 +236,15 @@ def predict():
                     achievement_point = {"x": float(t[i]), "y": float(y[i])}
                     break
             
+            # Evaluar cumplimiento exactamente en el tiempo crítico
             idx = np.searchsorted(t, tiempo_critico)
-            cumple = bool(y[idx if idx < len(y) else -1] >= porcentaje_requerido)
+            if idx >= len(t):
+                idx = len(t) - 1
+            valor_en_tiempo_critico = y[idx]
+            cumple = valor_en_tiempo_critico >= porcentaje_requerido
 
             print(f"⏱️ Tiempo crítico para '{ambiente}': {tiempo_critico} días (>{porcentaje_requerido}%)")
-            print(f"📈 Biodegradación al día {t[idx if idx < len(t) else -1]:.0f}: {y[idx if idx < len(y) else -1]:.2f}% → Cumple: {cumple}")
+            print(f"📈 Biodegradación al día {tiempo_critico}: {valor_en_tiempo_critico:.2f}% → Cumple: {cumple}")
 
             return jsonify({
                 "t": t_list,
