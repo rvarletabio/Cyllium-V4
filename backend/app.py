@@ -86,30 +86,22 @@ def predecir_curva(tipo, material, espesor, largo, ancho, ambiente):
         else:
             # Para espesores > 160, aseguramos que NO cumpla la norma
             if valor_180_dias >= porcentaje_norma:
-                # Calculamos cuánto excede el límite de espesor
-                exceso = (espesor - espesor_limite) / espesor_limite
-                # Factor base que disminuye con el exceso de espesor
-                factor_base = 1 / (1 + 0.5 * exceso)
+                # Calculamos el factor para que a 180 días esté por debajo del 90%
+                target_value = porcentaje_norma * 0.85  # 85% del valor requerido
+                factor_ajuste = target_value / valor_180_dias
                 
-                # Target para 180 días que depende del exceso
-                target_180 = porcentaje_norma * (0.85 - 0.1 * min(exceso, 0.5))
-                factor_ajuste = target_180 / valor_180_dias
-                
-                # Aplicamos una penalización gradual que varía con el tiempo
+                # Aplicamos una penalización gradual que aumenta con el tiempo
                 for i in range(len(predicciones)):
                     tiempo_normalizado = tiempos[i] / tiempo_norma
                     if tiempo_normalizado <= 1:
-                        # Hasta 180 días, curva suave
-                        factor_tiempo = factor_ajuste * (1 - 0.2 * np.sin(np.pi * tiempo_normalizado / 2))
+                        # Hasta 180 días, aplicamos penalización gradual
+                        factor_tiempo = 1 - (tiempo_normalizado * (1 - factor_ajuste))
                     else:
-                        # Después de 180 días, crecimiento logarítmico suave
-                        factor_tiempo = factor_ajuste * (1 + 0.15 * np.log1p(tiempo_normalizado - 1))
-                    
-                    # Aplicar factor con suavizado adicional
-                    predicciones[i] = predicciones[i] * (factor_tiempo * factor_base + (1 - factor_base) * (1 - np.exp(-3 * tiempo_normalizado)))
+                        # Después de 180 días, permitimos un crecimiento más lento
+                        factor_tiempo = factor_ajuste * (1 + 0.2 * np.log(tiempo_normalizado))
+                    predicciones[i] = predicciones[i] * factor_tiempo
                 
                 print(f"INFO: Curva ajustada para NO cumplir norma (espesor > {espesor_limite}μm)")
-                print(f"Target biodegradación a 180 días: {target_180:.1f}%")
 
     # Ensure predictions are always ascending (non-decreasing) and between 0-100
     predicciones = np.maximum(predicciones, 0)
