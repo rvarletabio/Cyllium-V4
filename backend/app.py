@@ -74,17 +74,21 @@ def predecir_curva(tipo, material, espesor, largo, ancho, ambiente):
         # Encontrar el índice correspondiente a 180 días
         idx_180 = np.searchsorted(tiempos, tiempo_norma)
         
-        if espesor > espesor_limite:
-            # Calculamos un factor de penalización basado en cuánto excede el límite
-            exceso = (espesor - espesor_limite) / espesor_limite
-            # Factor de penalización que aumenta con el exceso
-            factor_penalizacion = 1 / (1 + exceso)
-            
-            # Ajustamos la curva para que no cumpla la norma a los 180 días
-            valor_180_dias = predicciones[idx_180]
+        # Obtener el valor actual a los 180 días
+        valor_180_dias = predicciones[idx_180] if idx_180 < len(predicciones) else predicciones[-1]
+        
+        if espesor <= espesor_limite:
+            # Para espesores ≤ 160, aseguramos que cumpla la norma
+            if valor_180_dias < porcentaje_norma:
+                factor_ajuste = porcentaje_norma / valor_180_dias
+                predicciones = predicciones * factor_ajuste
+                print(f"INFO: Ajustando curva para cumplir norma (espesor ≤ {espesor_limite}μm)")
+        else:
+            # Para espesores > 160, aseguramos que NO cumpla la norma
             if valor_180_dias >= porcentaje_norma:
-                # Calculamos cuánto necesitamos reducir para no cumplir la norma
-                factor_ajuste = (porcentaje_norma - 5) / valor_180_dias  # 5% menos que el mínimo requerido
+                # Calculamos el factor para que a 180 días esté por debajo del 90%
+                target_value = porcentaje_norma * 0.85  # 85% del valor requerido
+                factor_ajuste = target_value / valor_180_dias
                 
                 # Aplicamos una penalización gradual que aumenta con el tiempo
                 for i in range(len(predicciones)):
@@ -93,12 +97,11 @@ def predecir_curva(tipo, material, espesor, largo, ancho, ambiente):
                         # Hasta 180 días, aplicamos penalización gradual
                         factor_tiempo = 1 - (tiempo_normalizado * (1 - factor_ajuste))
                     else:
-                        # Después de 180 días, mantenemos la penalización pero permitimos crecimiento más lento
-                        factor_tiempo = factor_ajuste * (1 + 0.1 * np.log(tiempo_normalizado))
-                    predicciones[i] = predicciones[i] * factor_tiempo * factor_penalizacion
-            
-            print(f"INFO: Curva aeróbica ajustada por espesor: {espesor}μm > {espesor_limite}μm")
-            print(f"Factor de penalización: {factor_penalizacion:.3f}")
+                        # Después de 180 días, permitimos un crecimiento más lento
+                        factor_tiempo = factor_ajuste * (1 + 0.2 * np.log(tiempo_normalizado))
+                    predicciones[i] = predicciones[i] * factor_tiempo
+                
+                print(f"INFO: Curva ajustada para NO cumplir norma (espesor > {espesor_limite}μm)")
 
     # Ensure predictions are always ascending (non-decreasing) and between 0-100
     predicciones = np.maximum(predicciones, 0)
@@ -240,8 +243,8 @@ def predict():
             idx = np.searchsorted(t, tiempo_critico)
             if idx >= len(t):
                 idx = len(t) - 1
-            valor_en_tiempo_critico = y[idx]
-            cumple = valor_en_tiempo_critico >= porcentaje_requerido
+            valor_en_tiempo_critico = float(y[idx])  # Convertir a float para serialización JSON
+            cumple = bool(valor_en_tiempo_critico >= porcentaje_requerido)
 
             print(f"⏱️ Tiempo crítico para '{ambiente}': {tiempo_critico} días (>{porcentaje_requerido}%)")
             print(f"📈 Biodegradación al día {tiempo_critico}: {valor_en_tiempo_critico:.2f}% → Cumple: {cumple}")
@@ -249,8 +252,9 @@ def predict():
             return jsonify({
                 "t": t_list,
                 "y": y_list,
-                "cumple": cumple,
-                "achievement_point": achievement_point
+                "cumple": str(cumple),  # Convertir bool a string para serialización JSON
+                "achievement_point": achievement_point,
+                "valor_critico": valor_en_tiempo_critico  # Agregar el valor en el tiempo crítico
             })
     except Exception as e:
         print(f"❌ Error: {str(e)}")
