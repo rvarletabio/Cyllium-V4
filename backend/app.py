@@ -65,24 +65,47 @@ def predecir_curva(tipo, material, espesor, largo, ancho, ambiente):
             predicciones = predicciones * factor_escala
             print(f"INFO: Curva PE/TPS escalada por factor: {factor_escala} para no superar el 20%")
     
-    # Ajuste específico para biodegradación aeróbica según el espesor
-    if ambiente == "Aeróbica":
+    # Ajuste específico para biodegradación aeróbica de BioE8i y BioE10
+    if ambiente == "Aeróbica" and material in ["BioE8i", "BioE10"]:
         espesor_limite = 160  # micras
+        tiempo_norma = 180    # días
+        porcentaje_norma = 90 # %
+        
+        # Encontrar el índice correspondiente a 180 días
+        idx_180 = np.searchsorted(tiempos, tiempo_norma)
+        
         if espesor > espesor_limite:
-            # Calculamos un factor de penalización basado en cuánto excede el límite
+            # Para espesores > 160, debemos asegurar que NO cumpla la norma
+            # Calculamos un factor de ajuste basado en cuánto excede el límite
             exceso = (espesor - espesor_limite) / espesor_limite
-            # Factor de penalización que aumenta gradualmente con el exceso
-            factor_penalizacion = 1 / (1 + 0.5 * exceso)
             
-            # Aplicamos el factor de penalización de forma gradual a lo largo del tiempo
-            for i in range(len(predicciones)):
-                tiempo_normalizado = tiempos[i] / 600  # Normalizar tiempo a [0,1]
-                # La penalización aumenta con el tiempo
-                factor_tiempo = 1 - (tiempo_normalizado * (1 - factor_penalizacion))
-                predicciones[i] = predicciones[i] * factor_tiempo
+            # Ajustamos la curva para que no cumpla la norma a los 180 días
+            valor_180_dias = predicciones[idx_180]
+            if valor_180_dias >= porcentaje_norma:
+                # Ya no cumple la norma, solo ajustamos la forma de la curva
+                factor_tiempo = np.exp(-exceso * (tiempos / tiempo_norma))
+                predicciones = predicciones * factor_tiempo
+            else:
+                # Necesitamos hacer que no cumpla la norma
+                factor_escala = (porcentaje_norma - 5) / valor_180_dias
+                predicciones = predicciones * factor_escala
+                # Ajustamos la forma de la curva
+                factor_tiempo = np.exp(-exceso * (tiempos / tiempo_norma))
+                predicciones = predicciones * factor_tiempo
             
-            print(f"INFO: Curva aeróbica ajustada por espesor: {espesor}μm > {espesor_limite}μm")
-            print(f"Factor de penalización base: {factor_penalizacion:.3f}")
+            print(f"INFO: Curva aeróbica ajustada para espesor {espesor}μm > {espesor_limite}μm")
+            print(f"Valor a 180 días: {predicciones[idx_180]:.1f}% (debe ser <{porcentaje_norma}%)")
+            
+        else:
+            # Para espesores ≤ 160, debemos asegurar que cumpla la norma
+            valor_180_dias = predicciones[idx_180]
+            if valor_180_dias < porcentaje_norma:
+                # Necesitamos hacer que cumpla la norma
+                factor_escala = (porcentaje_norma + 5) / valor_180_dias
+                predicciones = predicciones * factor_escala
+                
+            print(f"INFO: Curva aeróbica ajustada para espesor {espesor}μm ≤ {espesor_limite}μm")
+            print(f"Valor a 180 días: {predicciones[idx_180]:.1f}% (debe ser >{porcentaje_norma}%)")
 
     # Ensure predictions are always ascending (non-decreasing) and between 0-100
     predicciones = np.maximum(predicciones, 0)
