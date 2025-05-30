@@ -178,7 +178,7 @@ def predict():
         response = jsonify({"status": "ok"})
         return response
     
-    try:
+                                                                        try:
         if modelo is None:
             return jsonify({"error": "Modelo no cargado. Por favor revise los logs del servidor."}), 500
             
